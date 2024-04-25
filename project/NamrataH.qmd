@@ -1,0 +1,275 @@
+---
+title: "**Insights Unveiled for Global Dynamics in GDP, Population, Life, Defense and Education in 2020** "
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+
+output:
+  html_document:
+    css: styles.css
+---
+<style>
+  body {
+    background-color: lightblue;
+    color: black;
+  }
+</style>
+
+
+```{r}
+#| label: setup
+#| include: false
+
+install.packages("tidyverse")
+library(tidyverse)
+
+install.packages("ggplot2")
+library(ggplot2)
+
+install.packages("maps")
+
+library(ggplot2)
+
+unicef_indicator_1 <- read.csv("/cloud/project/unicef_indicator_1.csv")
+unicef_metadata <- read.csv("/cloud/project/unicef_metadata.csv")
+
+merged_data <- merge(unicef_indicator_1, unicef_metadata, by = c("country", "Year"))
+
+ 
+```
+
+
+## **Global overview of the population**
+
+##### In 2020, the world's population stood at approximately 7.8 billion people, distributed across diverse landscapes, cultures, and nations. Visualizing this population on a map provides a striking insight into the density and distribution of human life across the globe.
+```{r}
+library(dplyr)
+library(ggmap)
+
+options(scipen = 999)
+
+# Filter data for the year 2020
+pop_2020 <- unicef_metadata %>% 
+  filter(Year == 2020)
+
+# Load world map data
+map_world <- map_data("world")
+
+# Join population data with map data
+map_pop_2020 <- full_join(map_world, pop_2020, by = c("region" = "country"))
+
+
+# Define breaks and labels for the population scale
+breaks <- c(0, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8)
+labels <- scales::comma(breaks)
+
+```
+
+```{r}
+library(dplyr)
+library(ggmap)
+
+options(scipen = 999)
+
+# Filter data for the year 2020
+pop_2020 <- unicef_metadata %>% 
+  filter(Year == 2020)
+
+# Load world map data
+map_world <- map_data("world")
+
+# Join population data with map data
+map_pop_2020 <- full_join(map_world, pop_2020, by = c("region" = "country"))
+
+# Define breaks and labels for the population scale
+breaks <- seq(0, max(breaks), length.out = length(breaks))
+labels <- scales::comma(breaks / 1e3)  # Display numbers in thousands (shorthand notation)
+labels <- gsub(",", "", labels)  # Remove commas from labels
+labels <- gsub("0(?=k$)", "", labels, perl = TRUE)  # Remove trailing zeroes before "k"
+
+# Plot world population distribution
+ggplot(data = map_pop_2020, aes(x = long, y = lat, group = group, fill = Pop)) +
+  geom_polygon(color = "black", size = 0.1) +  
+  scale_fill_viridis_c(name = "Population (in 000s)", na.value = "grey90", 
+                        breaks = breaks, labels = labels, limits = c(0, max(breaks))) +  
+  labs(title = "World Population Distribution (2020)") +  
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        legend.position = "bottom",  # Position legend at the bottom
+        legend.title = element_text(size = 12),  # Increase legend title size
+        legend.text = element_text(size = 10),  # Increase legend text size
+        legend.key.width = unit(2.5, "cm"),  # Increase legend key width for better display
+        axis.text.x = element_blank(), axis.text.y = element_blank(),  
+        axis.title.x = element_blank(), axis.title.y = element_blank())
+```
+**Top 5 Countries by Population in 2020:**
+
+1. **China:** With a population surpassing 1.4 billion, China remains the most populous country in the world. Its vast territory encompasses a rich tapestry of cultures, languages, and traditions, with bustling cities juxtaposed against serene rural landscapes. The demographic density is notably concentrated in the eastern coastal regions, particularly around major metropolitan areas like Beijing, Shanghai, and Guangzhou.
+2. **India:** India, with its population exceeding 1.3 billion, closely follows China in population size. Its dynamic and diverse populace inhabits a vast subcontinent marked by varied terrain, from the Himalayas in the north to the tropical shores in the south. Major population centers include Mumbai, Delhi, and Kolkata, where urban sprawl and bustling streets encapsulate the vibrancy of Indian life.
+3. **United States:** Home to over 330 million people, the United States boasts a diverse population spread across a vast expanse of territory. From the densely populated urban cores of cities like New York, Los Angeles, and Chicago to the sprawling suburbs and rural heartlands, the American landscape reflects a blend of cultures, lifestyles, and landscapes.
+4. **Indonesia:** Indonesia's archipelagic nation is home to more than 270 million people, making it the fourth most populous country globally. Its islands span thousands of miles across the equator, offering a mosaic of cultures, languages, and ecosystems. Population centers such as Jakarta, Surabaya, and Bandung thrive amidst lush landscapes, while remote islands maintain their own distinct ways of life.
+5. **Pakistan:** With a population exceeding 220 million, Pakistan rounds out the top five populous countries in 2020. Nestled between South Asia and the Middle East, Pakistan's diverse population inhabits varied landscapes, from the fertile plains of Punjab to the rugged mountains of the northwest. Cities like Karachi, Lahore, and Islamabad serve as bustling hubs of commerce, culture, and politics.
+
+##### On a world map, the concentration of population in these countries would be evident, with clusters of urban areas connected by networks of roads, railways, and waterways. The distribution of population reflects not only geographical factors but also historical, cultural, and economic dynamics that shape human settlement patterns across the globe.
+
+
+## **Growth and Gaps**
+
+####  This scatter plot visually explores the relationship between life expectancy and GDP per capita, while using color to represent potential differences based on education gap.
+```{r}
+merged_data_2015_to_2020 <- subset(merged_data, Year >= 2015 & Year <= 2020)
+
+ggplot(merged_data_2015_to_2020) +
+  aes(x = GDP, y = LifeExp, color = Observation) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_gradient(low = "blue", high = "red") +  
+  theme_minimal() +
+  labs(
+    title = "Life Expectancy vs GDP per Capita with Education Gap 
+
+    for 2015 to 2020",
+    x = "GDP per Capita",
+    y = "Life Expectancy",
+    color = "Education Gap"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 14),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10)
+  )
+```
+#### The x-axis represents GDP per capita, and the y-axis represents life expectancy. Each data point is colored based on the education gap metric.
+
+
+## **GDP v/s Military Expenditure**
+
+```{r}
+library(ggplot2)
+
+merged_data_2015_to_2020 <- subset(merged_data, Year >= 2015 & Year <= 2020)
+
+ggplot(merged_data_2015_to_2020, aes(x = GDP, y = MilExp, color = MilExp)) +
+  geom_point(alpha = 0.5, size = 3) +  
+  geom_smooth(method = "lm", se = FALSE, color = "darkblue") +
+  scale_color_gradient(name = "Military Expenditure", low = "lightblue", high = "darkblue") +
+  labs(
+    x = "GDP per Capita (USD)",
+    y = "Military Expenditure",
+    title = "GDP per Capita vs Military Expenditure (2015-2020)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "bottom")
+```
+#### Across the years 2015 to 2020, countries exhibited diverse trends in the relationship between GDP and military expenditure, showcasing the intricate balance between national security investments and economic development objectives. Some nations prioritized bolstering defense capabilities amidst geopolitical uncertainties, while others pursued a more restrained approach, aligning military spending with broader economic strategies aimed at fostering sustainable growth and prosperity.
+#
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Assuming unicef_metadata contains necessary columns and data
+
+# Step 1: Filter data for the year 2020
+unicef_metadata_2020 <- unicef_metadata %>% 
+  filter(Year == 2020)
+
+# Step 2: Exclude null values for MilExp and GDP
+filtered_data <- unicef_metadata_2020 %>%
+  filter(!is.na(MilExp), !is.na(GDP))
+
+# Step 3: Select top 10 countries based on MilExp
+top_10_countries <- filtered_data %>%
+  top_n(10, wt = MilExp) %>%
+  arrange(desc(MilExp))
+
+# Step 4: Create pie chart
+pie_chart <- ggplot(top_10_countries, aes(x = "", y = MilExp, fill = GDP,label = country)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +  # Convert the bar chart into a pie chart
+  labs(title = "Top 10 Countries rendering notable Military Expenditure of their 
+       GDP Distribution (2020)") +
+  theme_void() +  # Remove unnecessary elements like axis and background
+  theme(legend.position = "right")  +
+   geom_text(aes(label = country), position = position_stack(vjust = 0.5), color = "white", size = 2.95) 
+
+# Print the pie chart
+print(pie_chart)
+
+```
+#### GDP and military expenditure are pivotal indicators reflecting a nation's economic strength and its commitment to defense and security.
+
+#### The above Piechart depicts the Countries who has spend a significant percentage (%) of their GDP (in US$) on the Military Expenditure for the particular year. 
+## **GDP v/s Inflation**
+
+#### In 2020, a complex interplay between inflation and GDP growth characterized the economic landscapes of the top 50 countries, reflecting diverse policy responses and external factors shaping each nation's economic trajectory
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Assuming unicef_metadata contains necessary columns and data
+
+# Filter data for the year 2020
+unicef_metadata_2020 <- subset(unicef_metadata, Year == 2020)
+
+# Select top 50 countries with highest GDP in 2020
+top_50_countries_2020 <- unicef_metadata_2020 %>%
+  top_n(50, wt = GDP) %>%
+  arrange(desc(GDP))
+
+# Plot the line chart
+ggplot(data = top_50_countries_2020) +
+  aes(x = Inflation, y = GDP, color = Inflation) +
+  geom_line(size = 1, alpha = 0.8) +  
+  scale_color_gradient(name = "Inflation", low = "blue", high = "red") +  
+  labs(
+    x = "Inflation",
+    y = "GDP",
+    title = "Inflation vs GDP Trends (2020) - Top 50 Countries"
+  ) +
+  theme_minimal() +  
+  theme(
+    legend.position = "bottom"  
+  )
+```
+#### In 2020, the top 10 countries with the highest average GDP exemplified diverse economic landscapes, reflecting a blend of factors such as innovation, natural resource endowment, and robust infrastructure. These nations showcased resilience amid global challenges, leveraging their economic prowess to navigate uncertainties and drive growth, thereby influencing regional and global economic dynamics.
+```{r}
+# Assuming merged_data contains necessary columns and data
+
+# Calculate average GDP for each country in 2020
+merged_data_avg_country_2020 <- merged_data %>%
+  filter(Year == 2020) %>%
+  group_by(country) %>%
+  summarise(m_GDP = mean(GDP)) %>%
+  top_n(10, wt = m_GDP) %>%
+  arrange(desc(m_GDP))
+
+# Plot the bar chart with improved visualizations
+ggplot(data = merged_data_avg_country_2020, aes(x = reorder(country, m_GDP), y = m_GDP, fill = country)) +
+  geom_col(width = 0.7) +  # Adjust width of the bars
+  scale_fill_viridis_d(option = "plasma") +  # Use a viridis color palette
+  labs(
+    title = "Top 10 Countries with Highest Average GDP in 2020",
+    x = "Country",
+    y = "Average GDP (in USD)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title = element_text(size = 14),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove the legend
+  )
+
+```
+
+
+#### **In conclusion, analyzing the economic indicators of inflation, GDP, and military expenditure and education across various countries from 2015 to 2020 reveals a nuanced picture of global economic dynamics and strategic priorities. While some nations demonstrated steady economic growth with prudent defense investments, others grappled with inflationary pressures amidst fluctuating GDP performances. This data underscores the intricate interplay between economic stability, national security concerns, and geopolitical realities, highlighting the diverse strategies adopted by countries to navigate evolving challenges and capitalize on opportunities for sustainable development.**
+
+
+
+
